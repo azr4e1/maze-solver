@@ -1,5 +1,4 @@
-from graphics.graphics import Window, Line, Point, Cell, Maze
-import time
+from graphics import Window, Point, Maze
 
 
 def main():

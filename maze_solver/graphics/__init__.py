@@ -1,1 +1,2 @@
-from .graphics import *
+from .window import *
+from .maze import *
