@@ -100,39 +100,39 @@ class Maze:
             cell_size_x: int,
             cell_size_y: int,
             win: Window):
-        self.__pos = pos
-        self.__rows = num_rows
-        self.__cols = num_cols
-        self.__cell_size_x = cell_size_x
-        self.__cell_size_y = cell_size_y
-        self.__win = win
-        self.__create_cells()
+        self._posn = pos
+        self._rows = num_rows
+        self._cols = num_cols
+        self._cell_size_x = cell_size_x
+        self._cell_size_y = cell_size_y
+        self._win = win
+        self._cells = []
+        self._create_cells()
 
-    def __create_cells(self):
-        self.__cells = []
-        curr_x = self.__pos.x
-        for coln in range(self.__cols):
+    def _create_cells(self):
+        curr_x = self._posn.x
+        for coln in range(self._cols):
             rows = []
-            curr_y = self.__pos.y
-            for rown in range(self.__rows):
+            curr_y = self._posn.y
+            for rown in range(self._rows):
                 point1 = Point(curr_x, curr_y)
 
                 # update curr_y
-                curr_y += self.__cell_size_y
-                point2 = Point(curr_x + self.__cell_size_x, curr_y)
+                curr_y += self._cell_size_y
+                point2 = Point(curr_x + self._cell_size_x, curr_y)
 
-                cell = Cell(self.__win, point1, point2)
+                cell = Cell(self._win, point1, point2)
                 rows.append(cell)
-            self.__cells.append(rows)
-            curr_x += self.__cell_size_x
+            self._cells.append(rows)
+            curr_x += self._cell_size_x
 
     def draw(self):
-        for i in range(self.__cols):
-            for j in range(self.__rows):
-                cell = self.__cells[i][j]
+        for i in range(self._cols):
+            for j in range(self._rows):
+                cell = self._cells[i][j]
                 cell.draw(CELL_COLOR)
-                self.__animate()
+                self._animate()
 
-    def __animate(self):
-        self.__win.redraw()
+    def _animate(self):
+        self._win.redraw()
         time.sleep(FRAME_TIME)
