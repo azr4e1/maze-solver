@@ -1,4 +1,9 @@
 from tkinter import Tk, Canvas, N, S, W, E
+import time
+
+
+FRAME_TIME = 0.05
+CELL_COLOR = 'black'
 
 
 class Point:
@@ -84,3 +89,50 @@ class Cell:
                        (to_cell.__pos1.y + to_cell.__pos2.y) / 2)
         color = 'red' if undo else 'gray'
         self.__win.draw_line(Line(point1, point2), color)
+
+
+class Maze:
+    def __init__(
+            self,
+            pos: Point,
+            num_rows: int,
+            num_cols: int,
+            cell_size_x: int,
+            cell_size_y: int,
+            win: Window):
+        self.__pos = pos
+        self.__rows = num_rows
+        self.__cols = num_cols
+        self.__cell_size_x = cell_size_x
+        self.__cell_size_y = cell_size_y
+        self.__win = win
+        self.__create_cells()
+
+    def __create_cells(self):
+        self.__cells = []
+        curr_x = self.__pos.x
+        for coln in range(self.__cols):
+            rows = []
+            curr_y = self.__pos.y
+            for rown in range(self.__rows):
+                point1 = Point(curr_x, curr_y)
+
+                # update curr_y
+                curr_y += self.__cell_size_y
+                point2 = Point(curr_x + self.__cell_size_x, curr_y)
+
+                cell = Cell(self.__win, point1, point2)
+                rows.append(cell)
+            self.__cells.append(rows)
+            curr_x += self.__cell_size_x
+
+    def draw(self):
+        for i in range(self.__cols):
+            for j in range(self.__rows):
+                cell = self.__cells[i][j]
+                cell.draw(CELL_COLOR)
+                self.__animate()
+
+    def __animate(self):
+        self.__win.redraw()
+        time.sleep(FRAME_TIME)
