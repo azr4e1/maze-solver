@@ -99,6 +99,7 @@ class Maze:
             for j in range(self._rows):
                 self._draw_cell(i, j)
         self._break_entrance_and_exit()
+        self._break_walls_r(0, 0, set())
 
     def _draw_cell(self, i, j):
         cell = self._cells[i][j]
@@ -112,19 +113,35 @@ class Maze:
         self._cells[self._cols-1][self._rows-1].rwall = False
         self._draw_cell(self._cols-1, self._rows-1)
 
-    def _break_walls_r(self):
-        current_cell = (0, 0)
-        visited = [current_cell]
+    def _break_walls_r(self, i, j, visited):
+        visited.add((i, j))
         while True:
-            i, j = current_cell
             adjacents = list(filter(lambda x: (0 <= x[0] < self._cols)
-                                    and (0 <= x[1] < self._rows),
+                                    and (0 <= x[1] < self._rows)
+                                    and (x not in visited),
                                     [(i+1, j), (i-1, j), (i, j+1), (i, j-1)]))
             if len(adjacents) == 0:
                 return
 
-            current_cell = choice(adjacents)
-            visited.append(current_cell)
+            next = choice(adjacents)
+            self._break_walls_between_cells(i, j, next[0], next[1])
+            self._break_walls_r(next[0], next[1], visited)
+
+    def _break_walls_between_cells(self, cur_i, cur_j, next_i, next_j):
+        if cur_i > next_i:
+            self._cells[cur_i][cur_j].lwall = False
+            self._cells[next_i][next_j].rwall = False
+        elif cur_i < next_i:
+            self._cells[cur_i][cur_j].rwall = False
+            self._cells[next_i][next_j].lwall = False
+        elif cur_j > next_j:
+            self._cells[cur_i][cur_j].uwall = False
+            self._cells[next_i][next_j].dwall = False
+        else:
+            self._cells[cur_i][cur_j].dwall = False
+            self._cells[next_i][next_j].uwall = False
+        self._draw_cell(cur_i, cur_j)
+        self._draw_cell(next_i, next_j)
 
     def _animate(self):
         if self._win is None:
