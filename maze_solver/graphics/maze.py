@@ -1,5 +1,8 @@
-from .window import Line, Point, Window
+from typing import Optional
 import time
+from random import choice
+
+from .window import Line, Point, Window
 
 
 FRAME_TIME = 0.05
@@ -14,7 +17,8 @@ class Cell:
                  lwall: bool = True,
                  rwall: bool = True,
                  uwall: bool = True,
-                 dwall: bool = True):
+                 dwall: bool = True,
+                 visited: bool = False):
         self._pos1 = pos1
         self._pos2 = pos2
         self._win = win
@@ -22,6 +26,7 @@ class Cell:
         self.rwall = rwall
         self.uwall = uwall
         self.dwall = dwall
+        self.visited = visited
 
     def draw(self, color: str):
         if self._win is None:
@@ -61,7 +66,8 @@ class Maze:
             num_cols: int,
             cell_size_x: int,
             cell_size_y: int,
-            win: Window):
+            win: Window,
+            seed: Optional[int] = None):
         self._posn = pos
         self._rows = num_rows
         self._cols = num_cols
@@ -105,6 +111,20 @@ class Maze:
 
         self._cells[self._cols-1][self._rows-1].rwall = False
         self._draw_cell(self._cols-1, self._rows-1)
+
+    def _break_walls_r(self):
+        current_cell = (0, 0)
+        visited = [current_cell]
+        while True:
+            i, j = current_cell
+            adjacents = list(filter(lambda x: (0 <= x[0] < self._cols)
+                                    and (0 <= x[1] < self._rows),
+                                    [(i+1, j), (i-1, j), (i, j+1), (i, j-1)]))
+            if len(adjacents) == 0:
+                return
+
+            current_cell = choice(adjacents)
+            visited.append(current_cell)
 
     def _animate(self):
         if self._win is None:
