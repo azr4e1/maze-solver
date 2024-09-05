@@ -56,6 +56,19 @@ class MazeTest(unittest.TestCase):
         self.assertFalse(m1._cells[0][0].lwall)
         self.assertFalse(m1._cells[m1._cols-1][m1._rows-1].rwall)
 
+    def test_reset_cells(self):
+        num_cols = 10
+        num_rows = 10
+        m1 = Maze(Point(0, 0), num_rows, num_cols, 10, 10, None)
+        cells = [(1, 9), (2, 3), (3, 1), (4, 5), (8, 4), (4, 4)]
+        for c in cells:
+            m1._cells[c[0]][c[1]].visited = True
+
+        m1._reset_cells_visited()
+        for i in range(num_cols):
+            for j in range(num_rows):
+                self.assertFalse(m1._cells[i][j].visited)
+
 
 if __name__ == "__main__":
     unittest.main()
