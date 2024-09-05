@@ -52,8 +52,8 @@ class Cell:
 
         point1 = Point((self._pos1.x + self._pos2.x) / 2,
                        (self._pos1.y + self._pos2.y) / 2)
-        point2 = Point((to_cell.__pos1.x + to_cell.__pos2.x) / 2,
-                       (to_cell.__pos1.y + to_cell.__pos2.y) / 2)
+        point2 = Point((to_cell._pos1.x + to_cell._pos2.x) / 2,
+                       (to_cell._pos1.y + to_cell._pos2.y) / 2)
         color = 'red' if undo else 'gray'
         self._win.draw_line(Line(point1, point2), color)
 
@@ -157,3 +157,37 @@ class Maze:
         for i in range(self._cols):
             for j in range(self._rows):
                 self._cells[i][j].visited = False
+
+    def solve(self):
+        return self._solve_r(0, 0)
+
+    def _solve_r(self, i, j):
+        end_cell = (self._cols-1, self._rows-1)
+        curr = (i, j)
+        curr_cell = self._cells[i][j]
+
+        self._animate()
+        self._cells[i][j].visited = True
+        if curr == end_cell:
+            return True
+
+        adjacents = {(i+1, j): 'r', (i-1, j): 'l',
+                     (i, j+1): 'd', (i, j-1): 'u'}
+        valid_directions = filter(lambda x: (0 <= x[0] < self._cols)
+                                  and (0 <= x[1] < self._rows),
+                                  adjacents.keys())
+        valid_directions = filter(
+            lambda x: not self._cells[x[0]][x[1]].visited,
+            valid_directions)
+        valid_directions = filter(
+            lambda x: not getattr(curr_cell, adjacents[x]+'wall', False),
+            valid_directions)
+        for next in valid_directions:
+            next_cell = self._cells[next[0]][next[1]]
+            curr_cell.draw_move(next_cell)
+            is_winning = self._solve_r(*next)
+            if is_winning:
+                return True
+            curr_cell.draw_move(next_cell, undo=True)
+
+        return False
