@@ -99,7 +99,7 @@ class Maze:
             for j in range(self._rows):
                 self._draw_cell(i, j)
         self._break_entrance_and_exit()
-        self._break_walls_r(0, 0, set())
+        self._break_walls_r(0, 0)
 
     def _draw_cell(self, i, j):
         cell = self._cells[i][j]
@@ -113,19 +113,19 @@ class Maze:
         self._cells[self._cols-1][self._rows-1].rwall = False
         self._draw_cell(self._cols-1, self._rows-1)
 
-    def _break_walls_r(self, i, j, visited):
-        visited.add((i, j))
+    def _break_walls_r(self, i, j):
+        self._cells[i][j].visited = True
         while True:
             adjacents = list(filter(lambda x: (0 <= x[0] < self._cols)
                                     and (0 <= x[1] < self._rows)
-                                    and (x not in visited),
+                                    and not self._cells[x[0]][x[1]].visited,
                                     [(i+1, j), (i-1, j), (i, j+1), (i, j-1)]))
             if len(adjacents) == 0:
                 return
 
             next = choice(adjacents)
             self._break_walls_between_cells(i, j, next[0], next[1])
-            self._break_walls_r(next[0], next[1], visited)
+            self._break_walls_r(next[0], next[1])
 
     def _break_walls_between_cells(self, cur_i, cur_j, next_i, next_j):
         if cur_i > next_i:
