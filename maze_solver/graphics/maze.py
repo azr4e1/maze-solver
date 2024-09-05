@@ -1,6 +1,6 @@
 from typing import Optional
 import time
-from random import choice
+import random
 
 from .window import Line, Point, Window
 
@@ -75,6 +75,8 @@ class Maze:
         self._cell_size_y = cell_size_y
         self._win = win
         self._cells = []
+
+        random.seed(seed)
         self._create_cells()
 
     def _create_cells(self):
@@ -123,7 +125,7 @@ class Maze:
             if len(adjacents) == 0:
                 return
 
-            next = choice(adjacents)
+            next = random.choice(adjacents)
             self._break_walls_between_cells(i, j, next[0], next[1])
             self._break_walls_r(next[0], next[1])
 
