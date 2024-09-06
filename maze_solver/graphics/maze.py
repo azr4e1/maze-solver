@@ -1,8 +1,9 @@
+from __future__ import annotations
 from typing import Optional
 import time
 import random
 
-from .window import Line, Point, Window
+from .window import Line, Point, MainWindow
 
 
 FRAME_TIME = 0.05
@@ -11,7 +12,7 @@ CELL_COLOR = 'black'
 
 class Cell:
     def __init__(self,
-                 win: Window,
+                 win: MainWindow,
                  pos1: Point,
                  pos2: Point,
                  lwall: bool = True,
@@ -46,7 +47,9 @@ class Cell:
             clr = color if w else blank_color
             self._win.draw_line(l, clr)
 
-    def draw_move(self, to_cell, undo: bool = False):
+    def draw_move(self, to_cell: Cell,
+                  undo: bool = False,
+                  correct: bool = False):
         if self._win is None:
             return
 
@@ -54,7 +57,11 @@ class Cell:
                        (self._pos1.y + self._pos2.y) / 2)
         point2 = Point((to_cell._pos1.x + to_cell._pos2.x) / 2,
                        (to_cell._pos1.y + to_cell._pos2.y) / 2)
-        color = 'red' if undo else 'gray'
+        color = 'gray'
+        if undo:
+            color = 'red'
+        if correct:
+            color = 'blue'
         self._win.draw_line(Line(point1, point2), color)
 
 
@@ -66,7 +73,7 @@ class Maze:
             num_cols: int,
             cell_size_x: int,
             cell_size_y: int,
-            win: Window,
+            win: MainWindow,
             seed: Optional[int] = None):
         self._posn = pos
         self._rows = num_rows
@@ -75,6 +82,7 @@ class Maze:
         self._cell_size_y = cell_size_y
         self._win = win
         self._cells = []
+        self.interrupted = False
 
         random.seed(seed)
         self._create_cells()
@@ -99,13 +107,23 @@ class Maze:
     def draw(self):
         for i in range(self._cols):
             for j in range(self._rows):
+                if self.interrupted:
+                    return
                 self._draw_cell(i, j)
         self._break_entrance_and_exit()
         self._break_walls_r(0, 0)
         self._reset_cells_visited()
 
+    def clear(self):
+        self._reset_cells_visited()
+        self.interrupted = False
+        self._win.clear()
+        for i in range(self._cols):
+            for j in range(self._rows):
+                self._draw_cell(i, j)
+
     def _draw_cell(self, i, j):
-        cell = self._cells[i][j]
+        cell: Cell = self._cells[i][j]
         cell.draw(CELL_COLOR)
         self._animate()
 
@@ -117,6 +135,8 @@ class Maze:
         self._draw_cell(self._cols-1, self._rows-1)
 
     def _break_walls_r(self, i, j):
+        if self.interrupted:
+            return
         self._cells[i][j].visited = True
         while True:
             adjacents = list(filter(lambda x: (0 <= x[0] < self._cols)
@@ -146,12 +166,12 @@ class Maze:
         self._draw_cell(cur_i, cur_j)
         self._draw_cell(next_i, next_j)
 
-    def _animate(self):
+    def _animate(self, sleep: int = 0):
         if self._win is None:
             return
 
         self._win.redraw()
-        time.sleep(FRAME_TIME)
+        time.sleep(sleep)
 
     def _reset_cells_visited(self):
         for i in range(self._cols):
@@ -162,11 +182,13 @@ class Maze:
         return self._solve_r(0, 0)
 
     def _solve_r(self, i, j):
+        self._animate(FRAME_TIME)
+        if self.interrupted:
+            return True
         end_cell = (self._cols-1, self._rows-1)
         curr = (i, j)
         curr_cell = self._cells[i][j]
 
-        self._animate()
         self._cells[i][j].visited = True
         if curr == end_cell:
             return True
@@ -187,6 +209,8 @@ class Maze:
             curr_cell.draw_move(next_cell)
             is_winning = self._solve_r(*next)
             if is_winning:
+                correct = True if not self.interrupted else False
+                curr_cell.draw_move(next_cell, correct=correct)
                 return True
             curr_cell.draw_move(next_cell, undo=True)
 

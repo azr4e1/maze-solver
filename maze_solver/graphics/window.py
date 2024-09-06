@@ -1,4 +1,7 @@
 from tkinter import Tk, Canvas, N, S, W, E
+from tkinter import ttk
+
+BACKGROUND = "white"
 
 
 class Point:
@@ -17,15 +20,14 @@ class Line:
                            self.p2.y, fill=fill_color, width=2)
 
 
-class Window:
+class MainWindow:
     def __init__(self, title, width, height):
         self._root = Tk()
         self._root.title(title)
         self._root.rowconfigure(0, weight=1)
         self._root.columnconfigure(0, weight=1)
         self._canvas = Canvas(
-            self._root, background="white", width=width, height=height)
-        self._canvas.grid(row=0, column=0, sticky=(N, S, W, E))
+            self._root, background=BACKGROUND, width=width, height=height)
         self._is_running = False
         self._root.protocol("WM_DELETE_WINDOW", self.close)
 
@@ -44,3 +46,9 @@ class Window:
 
     def draw_line(self, line: Line, fill_color: str):
         line.draw(self._canvas, fill_color)
+
+    def grid(self, *args, **kwargs):
+        self._canvas.grid(*args, **kwargs)
+
+    def clear(self):
+        self._canvas.delete('all')
