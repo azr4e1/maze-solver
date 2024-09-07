@@ -1,4 +1,3 @@
-import time
 from typing import Optional
 from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
@@ -24,8 +23,12 @@ class Control:
         rows = self.maze_rows.get()
         cols = self.maze_cols.get()
         cell_size = self.maze_cell_size.get()
+        self.interrupt_b.state(['!disabled'])
+        self.create_b.state(['disabled'])
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
+        if self.maze is not None:
+            del self.maze
         self.maze = Maze(MAZE_POS, rows, cols, cell_size, cell_size, self)
         self.clear()
         try:
@@ -34,9 +37,11 @@ class Control:
         except RecursionError:
             self.error_val.set('maze is too large; try to set lower values')
             self.redraw()
+            self.create_b.state(['!disabled'])
             return
         self.launch_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
+        self.create_b.state(['!disabled'])
 
     def solve_maze(self):
         if self.maze is None:
@@ -45,9 +50,11 @@ class Control:
             self.reset_maze()
         self.create_b.state(['disabled'])
         self.reset_b.state(['disabled'])
+        self.launch_b.state(['disabled'])
         self.maze_is_solved = self.maze.solve()
         self.create_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
+        self.launch_b.state(['!disabled'])
 
     def reset_maze(self):
         if self.maze is None:
@@ -60,6 +67,7 @@ class Control:
         if self.maze is None:
             return
         self.maze.interrupt()
+        self.create_b.state(['!disabled'])
 
     def grid(self, *args, **kwargs):
         self._frame.grid(*args, **kwargs)
@@ -76,23 +84,36 @@ class Control:
         self.maze_cell_size = IntVar(value=50)
         self.error_val = StringVar(value="")
         self.error_l = ttk.Label(
-            self._spinners, textvariable=self.error_val, foreground='red', font='TkSmallCaptionFont')
-        ttk.Label(self._spinners, text="Columns").grid(
-            column=1, row=0, padx=5, pady=(5, 0))
-        ttk.Label(self._spinners, text="Rows").grid(
-            column=1, row=2, padx=5, pady=(5, 0))
-        ttk.Label(self._spinners, text="Cell Size").grid(
-            column=0, row=0, padx=5, pady=(5, 0))
-        self.cols_b = ttk.Spinbox(
-            self._spinners, from_=2, to=50, textvariable=self.maze_cols)
-        self.rows_b = ttk.Spinbox(
-            self._spinners, from_=2, to=50, textvariable=self.maze_rows)
-        self.cellsize_b = ttk.Spinbox(
-            self._spinners, from_=10, to=100, textvariable=self.maze_cell_size)
+            self._spinners, textvariable=self.error_val, foreground='red',
+            font='TkSmallCaptionFont')
 
-        self.cols_b.state(['readonly'])
-        self.rows_b.state(['readonly'])
-        self.cellsize_b.state(['readonly'])
+        ttk.Label(self._spinners, text="Cell Size").grid(
+            column=0, row=0, padx=5, pady=5)
+        ttk.Label(self._spinners, text="Columns").grid(
+            column=0, row=1, padx=5, pady=5)
+        ttk.Label(self._spinners, text="Rows").grid(
+            column=0, row=2, padx=5, pady=5)
+
+        ttk.Label(self._spinners, textvariable=self.maze_cell_size).grid(
+            column=2, row=0, padx=5, pady=5)
+        ttk.Label(self._spinners, textvariable=self.maze_cols).grid(
+            column=2, row=1, padx=5, pady=5)
+        ttk.Label(self._spinners, textvariable=self.maze_rows).grid(
+            column=2, row=2, padx=5, pady=5)
+
+        self.cellsize_b = ttk.Scale(
+            self._spinners, from_=10, to=99, variable=self.maze_cell_size,
+            command=lambda x: self.maze_cell_size.set(int(float(x))))
+        self.cols_b = ttk.Scale(
+            self._spinners, from_=2, to=50, variable=self.maze_cols,
+            command=lambda x: self.maze_cols.set(int(float(x))))
+        self.rows_b = ttk.Scale(
+            self._spinners, from_=2, to=50, variable=self.maze_rows,
+            command=lambda x: self.maze_rows.set(int(float(x))))
+
+        # self.cols_b.state(['readonly'])
+        # self.rows_b.state(['readonly'])
+        # self.cellsize_b.state(['readonly'])
 
         self.create_b = ttk.Button(
             self._buttons, text="Create maze", command=self.create_maze, default='active')
@@ -103,19 +124,19 @@ class Control:
         self.interrupt_b = ttk.Button(
             self._buttons, text="Interrupt", command=self.interrupt_maze)
 
-        self.cols_b.grid(row=1, column=1, sticky=(N, S), padx=5, pady=(0, 5))
-        self.rows_b.grid(row=3, column=1, sticky=N, padx=5, pady=(0, 5))
-        self.cellsize_b.grid(row=1, column=0, sticky=N,
-                             padx=5, rowspan=2, pady=(0, 5))
-        self.error_l.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+        self.cols_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
+        self.rows_b.grid(row=2, column=1, sticky=N, padx=5, pady=5)
+        self.cellsize_b.grid(row=0, column=1, sticky=N, padx=5, pady=5)
+        self.error_l.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
+        self.reset_b.grid(row=1, column=0, padx=5, pady=5)
         self.launch_b.grid(row=0, column=1, padx=5, pady=5)
-        self.reset_b.grid(row=0, column=2, padx=5, pady=5)
         self.interrupt_b.grid(row=1, column=1, padx=5, pady=5)
 
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
+        self.interrupt_b.state(['disabled'])
 
 
 class App(MainWindow, Control):
