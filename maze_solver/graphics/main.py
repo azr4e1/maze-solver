@@ -52,12 +52,8 @@ class Control:
     def reset_maze(self):
         if self.maze is None:
             return
-        # if self.maze_is_being_solved:
         self.interrupt_maze()
         self.maze_is_solved = False
-        # new_cell_size = self.cellsize_b.get()
-        # self.maze._cell_size_x = new_cell_size
-        # self.maze._cell_size_y = new_cell_size
         self.maze.clear()
 
     def interrupt_maze(self):
@@ -81,12 +77,18 @@ class Control:
         self.error_val = StringVar(value="")
         self.error_l = ttk.Label(
             self._spinners, textvariable=self.error_val, foreground='red', font='TkSmallCaptionFont')
+        ttk.Label(self._spinners, text="Columns").grid(
+            column=1, row=0, padx=5, pady=(5, 0))
+        ttk.Label(self._spinners, text="Rows").grid(
+            column=1, row=2, padx=5, pady=(5, 0))
+        ttk.Label(self._spinners, text="Cell Size").grid(
+            column=0, row=0, padx=5, pady=(5, 0))
         self.cols_b = ttk.Spinbox(
             self._spinners, from_=2, to=50, textvariable=self.maze_cols)
         self.rows_b = ttk.Spinbox(
             self._spinners, from_=2, to=50, textvariable=self.maze_rows)
         self.cellsize_b = ttk.Spinbox(
-            self._spinners, from_=20, to=100, textvariable=self.maze_cell_size)
+            self._spinners, from_=10, to=100, textvariable=self.maze_cell_size)
 
         self.cols_b.state(['readonly'])
         self.rows_b.state(['readonly'])
@@ -101,15 +103,19 @@ class Control:
         self.interrupt_b = ttk.Button(
             self._buttons, text="Interrupt", command=self.interrupt_maze)
 
-        self.cols_b.grid(row=0, column=1, sticky=(N, S), padx=5, pady=5)
-        self.rows_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
-        self.cellsize_b.grid(row=0, column=0, sticky=N, padx=5, pady=5)
+        self.cols_b.grid(row=1, column=1, sticky=(N, S), padx=5, pady=(0, 5))
+        self.rows_b.grid(row=3, column=1, sticky=N, padx=5, pady=(0, 5))
+        self.cellsize_b.grid(row=1, column=0, sticky=N,
+                             padx=5, rowspan=2, pady=(0, 5))
         self.error_l.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
         self.launch_b.grid(row=0, column=1, padx=5, pady=5)
         self.reset_b.grid(row=0, column=2, padx=5, pady=5)
         self.interrupt_b.grid(row=1, column=1, padx=5, pady=5)
+
+        self.launch_b.state(['disabled'])
+        self.reset_b.state(['disabled'])
 
 
 class App(MainWindow, Control):
