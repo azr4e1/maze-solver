@@ -1,3 +1,4 @@
 from .window import *
 from .maze import *
-from .main import *
+from .app import *
+from .controls import *
