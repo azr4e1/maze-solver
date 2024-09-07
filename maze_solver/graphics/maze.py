@@ -74,6 +74,7 @@ class Maze:
             cell_size_x: int,
             cell_size_y: int,
             win: MainWindow,
+            speed: float = FRAME_TIME,
             seed: Optional[int] = None):
         self._posn = pos
         self._rows = num_rows
@@ -83,6 +84,7 @@ class Maze:
         self._win = win
         self._cells = []
         self.interrupted = False
+        self.speed = speed
 
         random.seed(seed)
         self._create_cells()
@@ -183,7 +185,7 @@ class Maze:
         return self._solve_r(0, 0)
 
     def _solve_r(self, i, j):
-        self._animate(FRAME_TIME)
+        self._animate(self.speed)
         if self.interrupted:
             return True
         end_cell = (self._cols-1, self._rows-1)

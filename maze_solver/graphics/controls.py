@@ -2,6 +2,7 @@ from typing import Optional
 from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
 from .window import Point
+import math
 
 from .maze import Maze
 
@@ -30,7 +31,8 @@ class Control:
         self.reset_b.state(['disabled'])
         if self.maze is not None:
             del self.maze
-        self.maze = Maze(MAZE_POS, rows, cols, cell_size, cell_size, self)
+        self.maze = Maze(MAZE_POS, rows, cols, cell_size,
+                         cell_size, self, 1/self.maze_speed.get())
         self.clear()
         try:
             self.maze.draw()
@@ -88,6 +90,7 @@ class Control:
         self.maze_rows = IntVar(value=10)
         self.maze_cols = IntVar(value=10)
         self.maze_cell_size = IntVar(value=50)
+        self.maze_speed = IntVar(value=20)
         self.error_val = StringVar(value="")
         self.error_l = ttk.Label(
             self._spinners, textvariable=self.error_val, foreground='red',
@@ -99,6 +102,8 @@ class Control:
             column=0, row=1, padx=5, pady=5)
         ttk.Label(self._spinners, text="Rows").grid(
             column=0, row=2, padx=5, pady=5)
+        ttk.Label(self._spinners, text="Speed").grid(
+            column=0, row=3, padx=5, pady=5)
 
         ttk.Label(self._spinners, textvariable=self.maze_cell_size).grid(
             column=2, row=0, padx=5, pady=5)
@@ -106,6 +111,8 @@ class Control:
             column=2, row=1, padx=5, pady=5)
         ttk.Label(self._spinners, textvariable=self.maze_rows).grid(
             column=2, row=2, padx=5, pady=5)
+        ttk.Label(self._spinners, textvariable=self.maze_speed).grid(
+            column=2, row=3, padx=5, pady=5)
 
         self.cellsize_b = ttk.Scale(
             self._spinners, from_=10, to=99, variable=self.maze_cell_size,
@@ -116,6 +123,9 @@ class Control:
         self.rows_b = ttk.Scale(
             self._spinners, from_=2, to=50, variable=self.maze_rows,
             command=lambda x: self.maze_rows.set(int(float(x))))
+        self.speed_b = ttk.Scale(
+            self._spinners, from_=1, to=100, variable=self.maze_speed,
+            command=self._set_speed_callback)
 
         # self.cols_b.state(['readonly'])
         # self.rows_b.state(['readonly'])
@@ -130,10 +140,11 @@ class Control:
         self.interrupt_b = ttk.Button(
             self._buttons, text="Interrupt", command=self.interrupt_maze)
 
+        self.cellsize_b.grid(row=0, column=1, sticky=N, padx=5, pady=5)
         self.cols_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
         self.rows_b.grid(row=2, column=1, sticky=N, padx=5, pady=5)
-        self.cellsize_b.grid(row=0, column=1, sticky=N, padx=5, pady=5)
-        self.error_l.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
+        self.speed_b.grid(row=3, column=1, sticky=N, padx=5, pady=5)
+        self.error_l.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
         self.reset_b.grid(row=1, column=0, padx=5, pady=5)
@@ -143,3 +154,9 @@ class Control:
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
         self.interrupt_b.state(['disabled'])
+
+    def _set_speed_callback(self, x):
+        if self.maze is not None:
+            speed = 1 / float(x)
+            self.maze.speed = speed
+        self.maze_speed.set(int(float(x)))
