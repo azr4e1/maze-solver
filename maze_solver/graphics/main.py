@@ -1,6 +1,6 @@
 import time
 from typing import Optional
-from tkinter import Tk, IntVar, N, S, E, W
+from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
 from .window import MainWindow, Point
 from .maze import Maze
@@ -20,18 +20,21 @@ class Control:
         self._create_buttons()
 
     def create_maze(self):
+        self.error_val.set('')
         rows = self.maze_rows.get()
         cols = self.maze_cols.get()
         cell_size = self.maze_cell_size.get()
-        self.interrupt_maze()
-        while not self.maze_is_solved and self.maze is not None:
-            time.sleep(0.01)
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
         self.maze = Maze(MAZE_POS, rows, cols, cell_size, cell_size, self)
         self.clear()
-        self.maze.draw()
-        self.maze_is_solved = False
+        try:
+            self.maze.draw()
+            self.maze_is_solved = False
+        except RecursionError:
+            self.error_val.set('maze is too large; try to set lower values')
+            self.redraw()
+            return
         self.launch_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
 
@@ -40,7 +43,11 @@ class Control:
             return
         if self.maze_is_solved:
             self.reset_maze()
+        self.create_b.state(['disabled'])
+        self.reset_b.state(['disabled'])
         self.maze_is_solved = self.maze.solve()
+        self.create_b.state(['!disabled'])
+        self.reset_b.state(['!disabled'])
 
     def reset_maze(self):
         if self.maze is None:
@@ -56,28 +63,37 @@ class Control:
     def interrupt_maze(self):
         if self.maze is None:
             return
-        self.maze.interrupted = True
-        # time.sleep(1)
+        self.maze.interrupt()
 
     def grid(self, *args, **kwargs):
         self._frame.grid(*args, **kwargs)
 
     def clear(self):
-        pass
+        ...
+
+    def redraw(self):
+        ...
 
     def _create_buttons(self):
         self.maze_rows = IntVar(value=10)
         self.maze_cols = IntVar(value=10)
         self.maze_cell_size = IntVar(value=50)
+        self.error_val = StringVar(value="")
+        self.error_l = ttk.Label(
+            self._spinners, textvariable=self.error_val, foreground='red', font='TkSmallCaptionFont')
         self.cols_b = ttk.Spinbox(
-            self._spinners, from_=1, to=50, textvariable=self.maze_cols)
+            self._spinners, from_=2, to=50, textvariable=self.maze_cols)
         self.rows_b = ttk.Spinbox(
-            self._spinners, from_=1, to=50, textvariable=self.maze_rows)
+            self._spinners, from_=2, to=50, textvariable=self.maze_rows)
         self.cellsize_b = ttk.Spinbox(
             self._spinners, from_=20, to=100, textvariable=self.maze_cell_size)
 
+        self.cols_b.state(['readonly'])
+        self.rows_b.state(['readonly'])
+        self.cellsize_b.state(['readonly'])
+
         self.create_b = ttk.Button(
-            self._buttons, text="Create maze", command=self.create_maze)
+            self._buttons, text="Create maze", command=self.create_maze, default='active')
         self.launch_b = ttk.Button(
             self._buttons, text="Launch solver", command=self.solve_maze)
         self.reset_b = ttk.Button(
@@ -88,6 +104,7 @@ class Control:
         self.cols_b.grid(row=0, column=1, sticky=(N, S), padx=5, pady=5)
         self.rows_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
         self.cellsize_b.grid(row=0, column=0, sticky=N, padx=5, pady=5)
+        self.error_l.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
         self.launch_b.grid(row=0, column=1, padx=5, pady=5)
@@ -103,3 +120,8 @@ class App(MainWindow, Control):
         super().grid(row=0, column=0, columnspan=4, sticky=(N, S, W, E))
         super(MainWindow, self).grid(row=0, column=4, sticky=E)
         self.maze: Maze = None
+
+        self._root.bind('<Return>', self._create_maze_bind)
+
+    def _create_maze_bind(self, *args):
+        self.create_maze()

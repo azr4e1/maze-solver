@@ -179,6 +179,7 @@ class Maze:
                 self._cells[i][j].visited = False
 
     def solve(self):
+        self.interrupted = False
         return self._solve_r(0, 0)
 
     def _solve_r(self, i, j):
@@ -215,3 +216,6 @@ class Maze:
             curr_cell.draw_move(next_cell, undo=True)
 
         return False
+
+    def interrupt(self):
+        self.interrupted = True
