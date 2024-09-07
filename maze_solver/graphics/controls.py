@@ -2,7 +2,6 @@ from typing import Optional
 from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
 from .window import Point
-import math
 
 from .maze import Maze
 
@@ -126,10 +125,6 @@ class Control:
         self.speed_b = ttk.Scale(
             self._spinners, from_=1, to=100, variable=self.maze_speed,
             command=self._set_speed_callback)
-
-        # self.cols_b.state(['readonly'])
-        # self.rows_b.state(['readonly'])
-        # self.cellsize_b.state(['readonly'])
 
         self.create_b = ttk.Button(
             self._buttons, text="Create maze", command=self.create_maze, default='active')
