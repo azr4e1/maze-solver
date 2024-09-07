@@ -21,11 +21,8 @@ class Line:
 
 
 class MainWindow:
-    def __init__(self, title, width, height):
-        self._root = Tk()
-        self._root.title(title)
-        self._root.rowconfigure(0, weight=1)
-        self._root.columnconfigure(0, weight=1)
+    def __init__(self, root, width, height):
+        self._root = root
         self._canvas = Canvas(
             self._root, background=BACKGROUND, width=width, height=height)
         self._is_running = False
@@ -34,15 +31,6 @@ class MainWindow:
     def redraw(self):
         self._root.update_idletasks()
         self._root.update()
-
-    def wait_for_close(self):
-        self._is_running = True
-        while self._is_running:
-            self.redraw()
-        print("window closed")
-
-    def close(self):
-        self._is_running = False
 
     def draw_line(self, line: Line, fill_color: str):
         line.draw(self._canvas, fill_color)
