@@ -39,6 +39,11 @@ class Control:
             self.redraw()
             self.create_b.state(['!disabled'])
             return
+
+        if self.maze.interrupted:
+            self.create_b.state(['!disabled'])
+            return
+
         self.launch_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
         self.create_b.state(['!disabled'])
@@ -127,7 +132,7 @@ class Control:
         self.cols_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
         self.rows_b.grid(row=2, column=1, sticky=N, padx=5, pady=5)
         self.cellsize_b.grid(row=0, column=1, sticky=N, padx=5, pady=5)
-        self.error_l.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
+        self.error_l.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
         self.reset_b.grid(row=1, column=0, padx=5, pady=5)

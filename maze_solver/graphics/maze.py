@@ -135,10 +135,10 @@ class Maze:
         self._draw_cell(self._cols-1, self._rows-1)
 
     def _break_walls_r(self, i, j):
-        if self.interrupted:
-            return
         self._cells[i][j].visited = True
         while True:
+            if self.interrupted:
+                return
             adjacents = list(filter(lambda x: (0 <= x[0] < self._cols)
                                     and (0 <= x[1] < self._rows)
                                     and not self._cells[x[0]][x[1]].visited,
