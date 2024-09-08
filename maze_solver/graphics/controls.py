@@ -2,6 +2,8 @@ from typing import Optional
 from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
 from .window import Point
+from threading import Thread
+import time
 
 from .maze import Maze
 
@@ -17,10 +19,12 @@ class Control:
         self._buttons.grid(row=10, column=0, sticky=(N, S))
         self.maze_is_solved = False
         self.maze: Optional[Maze] = None
+        self.start = 0
         self._create_buttons()
 
     def create_maze(self):
         self.error_val.set('')
+        self._reset_timer()
         rows = self.maze_rows.get()
         cols = self.maze_cols.get()
         cell_size = self.maze_cell_size.get()
@@ -51,19 +55,27 @@ class Control:
         self.create_b.state(['!disabled'])
 
     def solve_maze(self):
+        self._reset_timer()
         if self.maze is None:
             return
         if self.maze_is_solved:
             self.reset_maze()
+
         self.create_b.state(['disabled'])
         self.reset_b.state(['disabled'])
         self.launch_b.state(['disabled'])
+
+        # task = Thread(target=self._launch_timer)
+        # task.start()
         self.maze_is_solved = self.maze.solve()
+        # task.join()
+
         self.create_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
         self.launch_b.state(['!disabled'])
 
     def reset_maze(self):
+        self._reset_timer()
         if self.maze is None:
             return
         self.interrupt_maze()
@@ -85,12 +97,26 @@ class Control:
     def redraw(self):
         ...
 
+    def _update_timer(self):
+        if self.maze is None:
+            return
+        self.timer.set(f"{(time.time_ns() - self.start) / 1000000000:.2f}")
+        self.redraw()
+
+    def _reset_timer(self):
+        self.start = time.time_ns()
+        self.timer.set("0.00")
+
     def _create_buttons(self):
         self.maze_rows = IntVar(value=10)
         self.maze_cols = IntVar(value=10)
         self.maze_cell_size = IntVar(value=50)
         self.maze_speed = IntVar(value=20)
         self.error_val = StringVar(value="")
+        self.timer = StringVar(value="0.00")
+
+        self.timer_l = ttk.Label(
+            self._spinners, textvariable=self.timer)
         self.error_l = ttk.Label(
             self._spinners, textvariable=self.error_val, foreground='red',
             font='TkSmallCaptionFont')
@@ -103,6 +129,8 @@ class Control:
             column=0, row=2, padx=5, pady=5)
         ttk.Label(self._spinners, text="Speed").grid(
             column=0, row=3, padx=5, pady=5)
+        ttk.Label(self._spinners, text="Seconds:").grid(
+            column=0, row=4, padx=5, pady=5)
 
         ttk.Label(self._spinners, textvariable=self.maze_cell_size).grid(
             column=2, row=0, padx=5, pady=5)
@@ -139,7 +167,8 @@ class Control:
         self.cols_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
         self.rows_b.grid(row=2, column=1, sticky=N, padx=5, pady=5)
         self.speed_b.grid(row=3, column=1, sticky=N, padx=5, pady=5)
-        self.error_l.grid(row=4, column=0, columnspan=3, padx=5, pady=5)
+        self.timer_l.grid(row=4, column=1, columnspan=2, padx=5, pady=5)
+        self.error_l.grid(row=5, column=0, columnspan=3, padx=5, pady=5)
 
         self.create_b.grid(row=0, column=0, padx=5, pady=5)
         self.reset_b.grid(row=1, column=0, padx=5, pady=5)

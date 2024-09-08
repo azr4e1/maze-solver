@@ -8,6 +8,7 @@ from .window import Line, Point, MainWindow
 
 FRAME_TIME = 0.05
 CELL_COLOR = 'black'
+SLEEP_FRAME = 0.001
 
 
 class Cell:
@@ -173,7 +174,11 @@ class Maze:
             return
 
         self._win.redraw()
-        time.sleep(sleep)
+        slept = 0
+        while slept < sleep:
+            self._win._update_timer()
+            time.sleep(SLEEP_FRAME)
+            slept += SLEEP_FRAME
 
     def _reset_cells_visited(self):
         for i in range(self._cols):
