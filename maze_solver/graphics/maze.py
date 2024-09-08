@@ -29,10 +29,17 @@ class Cell:
         self.uwall = uwall
         self.dwall = dwall
         self.visited = visited
+        self.id = None
 
     def draw(self, color: str):
         if self._win is None:
             return
+
+        self.id = self._win._canvas.create_rectangle(self._pos1.x, self._pos1.y,
+                                                     self._pos2.x, self._pos2.y,
+                                                     fill="white", outline='white')
+        self._win._canvas.tag_bind(
+            self.id, "<Button-1>", lambda x: print(self._pos1, self._pos2))
 
         blank_color = self._win._canvas['background']
 
