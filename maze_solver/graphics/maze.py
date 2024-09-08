@@ -107,6 +107,24 @@ class Maze:
             self._cells.append(rows)
             curr_x += self._cell_size_x
 
+    def resize(self, new_cell_size_x, new_cell_size_y):
+        self._cell_size_x = new_cell_size_x
+        self._cell_size_y = new_cell_size_y
+
+        curr_x = self._posn.x
+        for coln in range(self._cols):
+            curr_y = self._posn.y
+            for rown in range(self._rows):
+                point1 = Point(curr_x, curr_y)
+
+                # update curr_y
+                curr_y += self._cell_size_y
+                point2 = Point(curr_x + self._cell_size_x, curr_y)
+
+                self._cells[coln][rown]._pos1 = point1
+                self._cells[coln][rown]._pos2 = point2
+            curr_x += self._cell_size_x
+
     def draw(self):
         for i in range(self._cols):
             for j in range(self._rows):

@@ -21,16 +21,13 @@ class App(MainWindow, Control):
         self._add_scrolling()
         self.maze: Maze = None
 
-        self._root.bind('<Return>', self._create_maze_bind)
+        self._root.bind('<Return>', lambda x: self.create_maze())
         self._canvas.bind('<Button-4>', self._scroll_vertically_mousewheel(-1))
         self._canvas.bind('<Button-5>', self._scroll_vertically_mousewheel(1))
         self._canvas.bind('<Shift-Button-4>',
                           self._scroll_horizontally_mousewheel(-1))
         self._canvas.bind('<Shift-Button-5>',
                           self._scroll_horizontally_mousewheel(1))
-
-    def _create_maze_bind(self, *args):
-        self.create_maze()
 
     def wait_for_close(self):
         self._is_running = True
@@ -41,6 +38,7 @@ class App(MainWindow, Control):
     def close(self):
         self.interrupt_maze()
         self._is_running = False
+
     def _add_scrolling(self):
         cell_size = self.maze_cell_size.get()
         height = 2 * MAZE_POS.y + self.maze_rows.get() * cell_size
@@ -49,7 +47,7 @@ class App(MainWindow, Control):
         h = ttk.Scrollbar(self._root, orient=HORIZONTAL)
         v = ttk.Scrollbar(self._root, orient=VERTICAL)
 
-        self._canvas['scrollregion'] = (0, 0, width, height)
+        self._canvas.config(scrollregion=(0, 0, width, height))
         self._canvas['yscrollcommand'] = v.set
         self._canvas['xscrollcommand'] = h.set
 

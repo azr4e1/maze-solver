@@ -32,8 +32,6 @@ class Control(ABC):
         self.create_b.state(['disabled'])
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
-        if self.maze is not None:
-            del self.maze
         self.maze = Maze(self.maze_pos, rows, cols, cell_size,
                          cell_size, self, 1/self.maze_speed.get())
         self.clear()
@@ -80,6 +78,11 @@ class Control(ABC):
             return
         self.interrupt_maze()
         self.maze_is_solved = False
+        cell_size = self.maze_cell_size.get()
+        if cell_size != self.maze._cell_size_x:
+            self.maze.resize(cell_size,
+                             cell_size)
+            self._update_scrollsize()
         self.maze.clear()
 
     def interrupt_maze(self):
