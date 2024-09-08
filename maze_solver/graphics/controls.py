@@ -1,17 +1,15 @@
 from typing import Optional
+from abc import ABC, abstractmethod
 from tkinter import Tk, IntVar, N, S, E, W, StringVar
 from tkinter import ttk
 from .window import Point
-from threading import Thread
 import time
 
 from .maze import Maze
 
-MAZE_POS = Point(10, 10)
 
-
-class Control:
-    def __init__(self, root: Tk, width: int):
+class Control(ABC):
+    def __init__(self, root: Tk, width: int, maze_pos: Point):
         self._frame = ttk.Frame(root, width=width)
         self._spinners = ttk.Frame(self._frame)
         self._spinners.grid(row=0, column=0, rowspan=10, sticky=(N, S))
@@ -20,11 +18,13 @@ class Control:
         self.maze_is_solved = False
         self.maze: Optional[Maze] = None
         self.start = 0
+        self.maze_pos = maze_pos
         self._create_buttons()
 
     def create_maze(self):
         self.error_val.set('')
         self._reset_timer()
+        self._update_scrollsize()
         rows = self.maze_rows.get()
         cols = self.maze_cols.get()
         cell_size = self.maze_cell_size.get()
@@ -34,7 +34,7 @@ class Control:
         self.reset_b.state(['disabled'])
         if self.maze is not None:
             del self.maze
-        self.maze = Maze(MAZE_POS, rows, cols, cell_size,
+        self.maze = Maze(self.maze_pos, rows, cols, cell_size,
                          cell_size, self, 1/self.maze_speed.get())
         self.clear()
         try:
@@ -91,11 +91,11 @@ class Control:
     def grid(self, *args, **kwargs):
         self._frame.grid(*args, **kwargs)
 
-    def clear(self):
-        ...
-
-    def redraw(self):
-        ...
+    def _set_speed_callback(self, x):
+        if self.maze is not None:
+            speed = 1 / float(x)
+            self.maze.speed = speed
+        self.maze_speed.set(int(float(x)))
 
     def _update_timer(self):
         if self.maze is None:
@@ -179,8 +179,14 @@ class Control:
         self.reset_b.state(['disabled'])
         self.interrupt_b.state(['disabled'])
 
-    def _set_speed_callback(self, x):
-        if self.maze is not None:
-            speed = 1 / float(x)
-            self.maze.speed = speed
-        self.maze_speed.set(int(float(x)))
+    @abstractmethod
+    def clear(self):
+        ...
+
+    @abstractmethod
+    def redraw(self):
+        ...
+
+    @abstractmethod
+    def _update_scrollsize(self):
+        ...
