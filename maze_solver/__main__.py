@@ -1,4 +1,4 @@
-from maze_solver.graphics import MainWindow, Point, Maze, App
+from graphics import MainWindow, Point, Maze, App
 
 
 def main():

@@ -35,13 +35,14 @@ class Cell:
         if self._win is None:
             return
 
+        blank_color = self._win._canvas['background']
+
         self.id = self._win._canvas.create_rectangle(self._pos1.x, self._pos1.y,
                                                      self._pos2.x, self._pos2.y,
-                                                     fill="white", outline='white')
+                                                     fill=blank_color,
+                                                     outline=blank_color)
         self._win._canvas.tag_bind(
-            self.id, "<Button-1>", lambda x: print(self._pos1, self._pos2))
-
-        blank_color = self._win._canvas['background']
+            self.id, "<Enter>", lambda x: print(self.get_center()))
 
         lline = Line(self._pos1, Point(self._pos1.x, self._pos2.y))
         rline = Line(Point(self._pos2.x, self._pos1.y), self._pos2)
@@ -61,16 +62,20 @@ class Cell:
         if self._win is None:
             return
 
-        point1 = Point((self._pos1.x + self._pos2.x) / 2,
-                       (self._pos1.y + self._pos2.y) / 2)
-        point2 = Point((to_cell._pos1.x + to_cell._pos2.x) / 2,
-                       (to_cell._pos1.y + to_cell._pos2.y) / 2)
+        point1 = self.get_center()
+        point2 = to_cell.get_center()
         color = 'gray'
         if undo:
             color = 'red'
         if correct:
             color = 'blue'
         self._win.draw_line(Line(point1, point2), color)
+
+    def get_center(self):
+        x = (self._pos1.x + self._pos2.x) / 2
+        y = (self._pos1.y + self._pos2.y) / 2
+
+        return Point(x, y)
 
 
 class Maze:
