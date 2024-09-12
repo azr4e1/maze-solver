@@ -1,9 +1,12 @@
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Callable, TypeAlias, Any
+from tkinter import Event
 import time
 import random
 
 from .window import Line, Point, MainWindow
+
+Callback: TypeAlias = Callable[Event, Any]
 
 
 FRAME_TIME = 0.05
@@ -20,29 +23,36 @@ class Cell:
                  rwall: bool = True,
                  uwall: bool = True,
                  dwall: bool = True,
-                 visited: bool = False):
+                 visited: bool = False,
+                 ):
+
         self._pos1 = pos1
         self._pos2 = pos2
         self._win = win
+        self._id = None
+        self._callbacks = []
+        self._pressed = -1
+        self._pressed_color = 'yellow'
+        self._blank_color = self._win._canvas['background']
         self.lwall = lwall
         self.rwall = rwall
         self.uwall = uwall
         self.dwall = dwall
         self.visited = visited
-        self.id = None
 
     def draw(self, color: str):
         if self._win is None:
             return
 
-        blank_color = self._win._canvas['background']
-
-        self.id = self._win._canvas.create_rectangle(self._pos1.x, self._pos1.y,
-                                                     self._pos2.x, self._pos2.y,
-                                                     fill=blank_color,
-                                                     outline=blank_color)
+        self._id = self._win._canvas.create_rectangle(self._pos1.x, self._pos1.y,
+                                                      self._pos2.x, self._pos2.y,
+                                                      fill=self._blank_color,
+                                                      outline=self._blank_color)
+        for event_type, callback in self._callbacks:
+            self._win._canvas.tag_bind(
+                self._id, event_type, callback)
         self._win._canvas.tag_bind(
-            self.id, "<Enter>", lambda x: print(self.get_center()))
+            self._id, '<Button-1>', self._change_color_pressed)
 
         lline = Line(self._pos1, Point(self._pos1.x, self._pos2.y))
         rline = Line(Point(self._pos2.x, self._pos1.y), self._pos2)
@@ -53,7 +63,7 @@ class Cell:
                      (self.rwall, rline),
                      (self.uwall, uline),
                      (self.dwall, dline)]:
-            clr = color if w else blank_color
+            clr = color if w else self._blank_color
             self._win.draw_line(l, clr)
 
     def draw_move(self, to_cell: Cell,
@@ -77,6 +87,16 @@ class Cell:
 
         return Point(x, y)
 
+    def register_event(self, event_type: str, callback: Callback):
+        self._callbacks.append((event_type, callback))
+
+    def _change_color_pressed(self, e: Event):
+        if self._id is None:
+            return
+        self._pressed *= -1
+        color = self._blank_color if self._pressed == -1 else self._pressed_color
+        self._win._canvas.itemconfig(self._id, fill=color)
+
 
 class Maze:
     def __init__(
@@ -98,6 +118,7 @@ class Maze:
         self._cells = []
         self.interrupted = False
         self.speed = speed
+        self._last_ij = None
 
         random.seed(seed)
         self._create_cells()
@@ -115,6 +136,8 @@ class Maze:
                 point2 = Point(curr_x + self._cell_size_x, curr_y)
 
                 cell = Cell(self._win, point1, point2)
+                cell.register_event(
+                    '<Button-1>', self._last_ij_callback(coln, rown))
                 rows.append(cell)
             self._cells.append(rows)
             curr_x += self._cell_size_x
@@ -256,3 +279,10 @@ class Maze:
 
     def interrupt(self):
         self.interrupted = True
+
+    def _last_ij_callback(self, i, j):
+        def inner(e: Event):
+            print(i, j)
+            self._last_ij = (i, j)
+
+        return inner
