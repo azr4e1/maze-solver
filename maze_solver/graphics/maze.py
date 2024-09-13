@@ -52,7 +52,7 @@ class Cell:
             self._win._canvas.tag_bind(
                 self._id, event_type, callback)
         self._win._canvas.tag_bind(
-            self._id, '<Button-1>', self._change_color_pressed, add=True)
+            self._id, '<Button-1>', self.change_color_pressed, add=True)
 
         lline = Line(self._pos1, Point(self._pos1.x, self._pos2.y))
         rline = Line(Point(self._pos2.x, self._pos1.y), self._pos2)
@@ -90,7 +90,7 @@ class Cell:
     def register_event(self, event_type: str, callback: Callback):
         self._callbacks.append((event_type, callback))
 
-    def _change_color_pressed(self, e: Event):
+    def change_color_pressed(self, e: Optional[Event] = None):
         if self._id is None:
             return
         self.pressed = False if self.pressed else True
