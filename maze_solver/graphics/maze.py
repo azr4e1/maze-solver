@@ -23,7 +23,7 @@ class Cell:
                  rwall: bool = True,
                  uwall: bool = True,
                  dwall: bool = True,
-                 visited: bool = False,
+                 # visited: bool = False,
                  ):
 
         self._pos1 = pos1
@@ -31,14 +31,14 @@ class Cell:
         self._win = win
         self._id = None
         self._callbacks = []
-        self._pressed = -1
         self._pressed_color = 'yellow'
         self._blank_color = self._win._canvas['background']
+        self.pressed = False
+        self.visited = False
         self.lwall = lwall
         self.rwall = rwall
         self.uwall = uwall
         self.dwall = dwall
-        self.visited = visited
 
     def draw(self, color: str):
         if self._win is None:
@@ -52,7 +52,7 @@ class Cell:
             self._win._canvas.tag_bind(
                 self._id, event_type, callback)
         self._win._canvas.tag_bind(
-            self._id, '<Button-1>', self._change_color_pressed)
+            self._id, '<Button-1>', self._change_color_pressed, add=True)
 
         lline = Line(self._pos1, Point(self._pos1.x, self._pos2.y))
         rline = Line(Point(self._pos2.x, self._pos1.y), self._pos2)
@@ -93,8 +93,8 @@ class Cell:
     def _change_color_pressed(self, e: Event):
         if self._id is None:
             return
-        self._pressed *= -1
-        color = self._blank_color if self._pressed == -1 else self._pressed_color
+        self.pressed = False if self.pressed else True
+        color = self._blank_color if not self.pressed else self._pressed_color
         self._win._canvas.itemconfig(self._id, fill=color)
 
 
@@ -237,6 +237,7 @@ class Maze:
         for i in range(self._cols):
             for j in range(self._rows):
                 self._cells[i][j].visited = False
+                self._cells[i][j].pressed = False
 
     def solve(self):
         self.interrupted = False
