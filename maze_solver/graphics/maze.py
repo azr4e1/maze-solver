@@ -50,7 +50,7 @@ class Cell:
                                                       outline=self._blank_color)
         for event_type, callback in self._callbacks:
             self._win._canvas.tag_bind(
-                self._id, event_type, callback)
+                self._id, event_type, callback, add=True)
         self._win._canvas.tag_bind(
             self._id, '<Button-1>', self.change_color_pressed, add=True)
 
@@ -255,17 +255,7 @@ class Maze:
         if curr == end_cell:
             return True
 
-        adjacents = {(i+1, j): 'r', (i-1, j): 'l',
-                     (i, j+1): 'd', (i, j-1): 'u'}
-        valid_directions = filter(lambda x: (0 <= x[0] < self._cols)
-                                  and (0 <= x[1] < self._rows),
-                                  adjacents.keys())
-        valid_directions = filter(
-            lambda x: not self._cells[x[0]][x[1]].visited,
-            valid_directions)
-        valid_directions = filter(
-            lambda x: not getattr(curr_cell, adjacents[x]+'wall', False),
-            valid_directions)
+        valid_directions = self._get_valid_directions(i, j)
         for next in valid_directions:
             next_cell = self._cells[next[0]][next[1]]
             curr_cell.draw_move(next_cell)
@@ -287,3 +277,30 @@ class Maze:
             self._last_ij = (i, j)
 
         return inner
+
+    def _next_cell_callback(self, i, j):
+        curr_cell: Cell = self._cells[i][j]
+        if self._last_ij is None:
+            self._last_ij = (i, j)
+
+        prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
+
+    def _get_valid_directions(self, i, j, exclude_pressed: bool = False):
+        curr_cell = self._cells[i][j]
+        adjacents = {(i+1, j): 'r', (i-1, j): 'l',
+                     (i, j+1): 'd', (i, j-1): 'u'}
+        valid_directions = filter(lambda x: (0 <= x[0] < self._cols)
+                                  and (0 <= x[1] < self._rows),
+                                  adjacents.keys())
+        valid_directions = filter(
+            lambda x: not self._cells[x[0]][x[1]].visited,
+            valid_directions)
+        if exclude_pressed:
+            valid_directions = filter(
+                lambda x: not self._cells[x[0]][x[1]].pressed,
+                valid_directions)
+        valid_directions = filter(
+            lambda x: not getattr(curr_cell, adjacents[x]+'wall', False),
+            valid_directions)
+
+        return valid_directions
