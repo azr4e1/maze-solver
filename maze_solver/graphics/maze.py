@@ -137,7 +137,9 @@ class Maze:
 
                 cell = Cell(self._win, point1, point2)
                 cell.register_event(
-                    '<Button-1>', self._last_ij_callback(coln, rown))
+                    '<Button-1>', self._next_cell_callback(coln, rown))
+                # cell.register_event(
+                #     '<B1-Motion>', self._next_cell_callback(coln, rown))
                 rows.append(cell)
             self._cells.append(rows)
             curr_x += self._cell_size_x
@@ -279,11 +281,25 @@ class Maze:
         return inner
 
     def _next_cell_callback(self, i, j):
-        curr_cell: Cell = self._cells[i][j]
-        if self._last_ij is None:
-            self._last_ij = (i, j)
+        def inner(e: Event):
+            curr_cell: Cell = self._cells[i][j]
+            if self._last_ij == (i, j):
+                self._last_ij = None
+                return
+            if self._last_ij is None:
+                self._last_ij = (i, j)
+                return
 
-        prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
+            prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
+            valid_directions = self._get_valid_directions(*self._last_ij)
+            if (i, j) in valid_directions:
+                prev_cell.draw_move(curr_cell)
+                prev_cell.visited = True
+                curr_cell.visited = True
+
+            prev_cell.change_color_pressed()
+            self._last_ij = (i, j)
+        return inner
 
     def _get_valid_directions(self, i, j, exclude_pressed: bool = False):
         curr_cell = self._cells[i][j]
