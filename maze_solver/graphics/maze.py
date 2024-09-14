@@ -138,8 +138,8 @@ class Maze:
                 cell = Cell(self._win, point1, point2)
                 cell.register_event(
                     '<Button-1>', self._next_cell_callback(coln, rown))
-                # cell.register_event(
-                #     '<B1-Motion>', self._next_cell_callback(coln, rown))
+                cell.register_event(
+                    '<B1-Motion-Enter>', self._next_cell_callback(coln, rown))
                 rows.append(cell)
             self._cells.append(rows)
             curr_x += self._cell_size_x
@@ -292,7 +292,8 @@ class Maze:
                 return
 
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
-            valid_directions = self._get_valid_directions(*self._last_ij)
+            valid_directions = self._get_valid_directions(
+                *self._last_ij, include_visited=True)
             if (i, j) in valid_directions:
                 prev_cell.draw_move(curr_cell)
                 prev_cell.visited = True
@@ -302,19 +303,16 @@ class Maze:
             self._last_ij = (i, j)
         return inner
 
-    def _get_valid_directions(self, i, j, exclude_pressed: bool = False):
+    def _get_valid_directions(self, i, j, include_visited: bool = False):
         curr_cell = self._cells[i][j]
         adjacents = {(i+1, j): 'r', (i-1, j): 'l',
                      (i, j+1): 'd', (i, j-1): 'u'}
         valid_directions = filter(lambda x: (0 <= x[0] < self._cols)
                                   and (0 <= x[1] < self._rows),
                                   adjacents.keys())
-        valid_directions = filter(
-            lambda x: not self._cells[x[0]][x[1]].visited,
-            valid_directions)
-        if exclude_pressed:
+        if not include_visited:
             valid_directions = filter(
-                lambda x: not self._cells[x[0]][x[1]].pressed,
+                lambda x: not self._cells[x[0]][x[1]].visited,
                 valid_directions)
         valid_directions = filter(
             lambda x: not getattr(curr_cell, adjacents[x]+'wall', False),
