@@ -240,6 +240,7 @@ class Maze:
             for j in range(self._rows):
                 self._cells[i][j].visited = False
                 self._cells[i][j].pressed = False
+                self._last_ij = None
 
     def solve(self):
         self.interrupted = False
