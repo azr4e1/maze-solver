@@ -48,9 +48,9 @@ class Cell:
                                                       self._pos2.x, self._pos2.y,
                                                       fill=self._blank_color,
                                                       outline=self._blank_color)
-        for event_type, callback in self._callbacks:
+        for event, callback in self._callbacks:
             self._win._canvas.tag_bind(
-                self._id, event_type, callback, add=True)
+                self._id, event, callback, add=True)
         self._win._canvas.tag_bind(
             self._id, '<Button-1>', self.change_color_pressed, add=True)
 
@@ -87,8 +87,8 @@ class Cell:
 
         return Point(x, y)
 
-    def register_event(self, event_type: str, callback: Callback):
-        self._callbacks.append((event_type, callback))
+    def register_event(self, event: str, callback: Callback):
+        self._callbacks.append((event, callback))
 
     def change_color_pressed(self, e: Optional[Event] = None):
         if self._id is None:
@@ -124,6 +124,7 @@ class Maze:
         self._create_cells()
 
     def _create_cells(self):
+        self._win._canvas.bind_all('<B1-Motion>', self._next_cell_mousedrag)
         curr_x = self._posn.x
         for coln in range(self._cols):
             rows = []
@@ -138,8 +139,6 @@ class Maze:
                 cell = Cell(self._win, point1, point2)
                 cell.register_event(
                     '<Button-1>', self._next_cell_callback(coln, rown))
-                cell.register_event(
-                    '<B1-Motion-Enter>', self._next_cell_callback(coln, rown))
                 rows.append(cell)
             self._cells.append(rows)
             curr_x += self._cell_size_x
@@ -274,13 +273,6 @@ class Maze:
     def interrupt(self):
         self.interrupted = True
 
-    def _last_ij_callback(self, i, j):
-        def inner(e: Event):
-            print(i, j)
-            self._last_ij = (i, j)
-
-        return inner
-
     def _next_cell_callback(self, i, j):
         def inner(e: Event):
             curr_cell: Cell = self._cells[i][j]
@@ -303,6 +295,18 @@ class Maze:
             self._last_ij = (i, j)
         return inner
 
+    def _next_cell_mousedrag(self, e: Event):
+        pos = self._get_cell_pos(e.x, e.y)
+        if pos is None:
+            return
+
+        i, j = pos
+        curr_cell: Cell = self._cells[i][j]
+        center = curr_cell.get_center()
+        if (i, j) != self._last_ij:
+            self._win._canvas.event_generate(
+                '<Button-1>', x=center.x, y=center.y)
+
     def _get_valid_directions(self, i, j, include_visited: bool = False):
         curr_cell = self._cells[i][j]
         adjacents = {(i+1, j): 'r', (i-1, j): 'l',
@@ -319,3 +323,14 @@ class Maze:
             valid_directions)
 
         return valid_directions
+
+    def _get_cell_pos(self, x, y):
+        j = (y - self._posn.y) // self._cell_size_y
+        i = (x - self._posn.x) // self._cell_size_x
+
+        if i < 0 or i >= self._cols:
+            return None
+        if j < 0 or j >= self._rows:
+            return None
+
+        return (i, j)
