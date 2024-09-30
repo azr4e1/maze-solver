@@ -51,8 +51,8 @@ class Cell:
         for event, callback in self._callbacks:
             self._win._canvas.tag_bind(
                 self._id, event, callback, add=True)
-        self._win._canvas.tag_bind(
-            self._id, '<Button-1>', self.change_color_pressed, add=True)
+        # self._win._canvas.tag_bind(
+        #     self._id, '<Button-1>', self.change_color_pressed, add=True)
 
         lline = Line(self._pos1, Point(self._pos1.x, self._pos2.y))
         rline = Line(Point(self._pos2.x, self._pos1.y), self._pos2)
@@ -118,13 +118,13 @@ class Maze:
         self._cells = []
         self.interrupted = False
         self.speed = speed
-        self._last_ij = None
+        self._last_ij = (0, 0)
 
         random.seed(seed)
         self._create_cells()
 
     def _create_cells(self):
-        self._win._canvas.bind_all('<B1-Motion>', self._next_cell_mousedrag)
+        self._win._canvas.bind('<B1-Motion>', self._next_cell_mousedrag)
         curr_x = self._posn.x
         for coln in range(self._cols):
             rows = []
@@ -239,7 +239,9 @@ class Maze:
             for j in range(self._rows):
                 self._cells[i][j].visited = False
                 self._cells[i][j].pressed = False
-                self._last_ij = None
+                self._last_ij = (0, 0)
+
+        self._cells[0][0].change_color_pressed()
 
     def solve(self):
         self.interrupted = False
@@ -275,24 +277,18 @@ class Maze:
 
     def _next_cell_callback(self, i, j):
         def inner(e: Event):
-            curr_cell: Cell = self._cells[i][j]
-            if self._last_ij == (i, j):
-                self._last_ij = None
-                return
-            if self._last_ij is None:
-                self._last_ij = (i, j)
-                return
-
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
+            curr_cell: Cell = self._cells[i][j]
             valid_directions = self._get_valid_directions(
-                *self._last_ij, include_visited=True)
+                *self._last_ij, include_visited=False)
             if (i, j) in valid_directions:
                 prev_cell.draw_move(curr_cell)
                 prev_cell.visited = True
                 curr_cell.visited = True
 
-            prev_cell.change_color_pressed()
-            self._last_ij = (i, j)
+                prev_cell.change_color_pressed()
+                curr_cell.change_color_pressed()
+                self._last_ij = (i, j)
         return inner
 
     def _next_cell_mousedrag(self, e: Event):
