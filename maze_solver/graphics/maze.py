@@ -284,7 +284,7 @@ class Maze:
             curr_cell: Cell = self._cells[i][j]
             valid_directions = self._get_valid_directions(
                 *self._last_ij, include_visited=False)
-            if (i, j) in valid_directions:
+            if (i, j) in valid_directions and not self.interrupted:
                 prev_cell.draw_move(curr_cell)
                 prev_cell.visited = True
                 curr_cell.visited = True
@@ -296,10 +296,13 @@ class Maze:
                 if self._last_ij == end_cell:
                     self.interrupt()
                     self._draw_stacked_solution(correct=True, undo=True)
+                    self.interrupt()
+                    return
             if len(valid_directions) == 0 \
                or len(self._get_valid_directions(i, j, include_visited=False)) == 0:
                 self.interrupt()
                 self._draw_stacked_solution(correct=False, undo=True)
+                return
         return inner
 
     def _next_cell_mousedrag(self, e: Event):
