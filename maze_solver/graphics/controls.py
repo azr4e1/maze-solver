@@ -65,6 +65,7 @@ class Control(ABC):
 
         # task = Thread(target=self._launch_timer)
         # task.start()
+        self.maze._cells[0][0].change_color_pressed()
         self.maze_is_solved = self.maze.solve()
         # task.join()
 

@@ -119,6 +119,7 @@ class Maze:
         self.interrupted = False
         self.speed = speed
         self._last_ij = (0, 0)
+        self._solution_stack = [(0, 0)]
 
         random.seed(seed)
         self._create_cells()
@@ -172,12 +173,13 @@ class Maze:
         self._reset_cells_visited()
 
     def clear(self):
-        self._reset_cells_visited()
+        self._solution_stack = [(0, 0)]
         self.interrupted = False
         self._win.clear()
         for i in range(self._cols):
             for j in range(self._rows):
                 self._draw_cell(i, j)
+        self._reset_cells_visited()
 
     def _draw_cell(self, i, j):
         cell: Cell = self._cells[i][j]
@@ -239,8 +241,8 @@ class Maze:
             for j in range(self._rows):
                 self._cells[i][j].visited = False
                 self._cells[i][j].pressed = False
-                self._last_ij = (0, 0)
 
+        self._last_ij = (0, 0)
         self._cells[0][0].change_color_pressed()
 
     def solve(self):
@@ -277,6 +279,7 @@ class Maze:
 
     def _next_cell_callback(self, i, j):
         def inner(e: Event):
+            end_cell = (self._cols-1, self._rows-1)
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
             curr_cell: Cell = self._cells[i][j]
             valid_directions = self._get_valid_directions(
@@ -289,6 +292,14 @@ class Maze:
                 prev_cell.change_color_pressed()
                 curr_cell.change_color_pressed()
                 self._last_ij = (i, j)
+                self._solution_stack.append((i, j))
+                if self._last_ij == end_cell:
+                    self.interrupt()
+                    self._draw_stacked_solution(correct=True, undo=True)
+            if len(valid_directions) == 0 \
+               or len(self._get_valid_directions(i, j, include_visited=False)) == 0:
+                self.interrupt()
+                self._draw_stacked_solution(correct=False, undo=True)
         return inner
 
     def _next_cell_mousedrag(self, e: Event):
@@ -318,7 +329,7 @@ class Maze:
             lambda x: not getattr(curr_cell, adjacents[x]+'wall', False),
             valid_directions)
 
-        return valid_directions
+        return list(valid_directions)
 
     def _get_cell_pos(self, x, y):
         j = (y - self._posn.y) // self._cell_size_y
@@ -330,3 +341,11 @@ class Maze:
             return None
 
         return (i, j)
+
+    def _draw_stacked_solution(self, correct: bool, undo: bool):
+        prev = (0, 0)
+        for el in self._solution_stack[1:]:
+            prev_cell: Cell = self._cells[prev[0]][prev[1]]
+            curr_cell: Cell = self._cells[el[0]][el[1]]
+            prev_cell.draw_move(curr_cell, correct=correct, undo=undo)
+            prev = el
