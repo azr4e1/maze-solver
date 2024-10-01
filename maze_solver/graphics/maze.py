@@ -298,8 +298,8 @@ class Maze:
                     self._draw_stacked_solution(correct=True, undo=True)
                     self.interrupt()
                     return
-            if len(valid_directions) == 0 \
-               or len(self._get_valid_directions(i, j, include_visited=False)) == 0:
+            if not self.interrupted and (len(valid_directions) == 0
+               or len(self._get_valid_directions(i, j, include_visited=False)) == 0):
                 self.interrupt()
                 self._draw_stacked_solution(correct=False, undo=True)
                 return
