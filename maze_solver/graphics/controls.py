@@ -56,7 +56,7 @@ class Control(ABC):
         self._reset_timer()
         if self.maze is None:
             return
-        if self.maze_is_solved:
+        if self.maze_is_solved or self.maze.manual_solution:
             self.reset_maze()
 
         self.create_b.state(['disabled'])

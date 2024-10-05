@@ -31,10 +31,9 @@ class Cell:
         self._win = win
         self._id = None
         self._callbacks = []
-        self._pressed_color = 'yellow'
         self._blank_color = self._win._canvas['background']
-        self.pressed = False
         self.visited = False
+        self.manual_visited = False
         self.lwall = lwall
         self.rwall = rwall
         self.uwall = uwall
@@ -78,7 +77,7 @@ class Cell:
         if undo:
             color = 'red'
         if correct:
-            color = 'blue'
+            color = 'green'
         self._win.draw_line(Line(point1, point2), color)
 
     def get_center(self):
@@ -90,11 +89,15 @@ class Cell:
     def register_event(self, event: str, callback: Callback):
         self._callbacks.append((event, callback))
 
-    def change_color_pressed(self, e: Optional[Event] = None):
+    def change_color_pressed(self, e: Optional[Event] = None, undo: bool = False, correct: bool = False):
         if self._id is None:
             return
-        self.pressed = False if self.pressed else True
-        color = self._blank_color if not self.pressed else self._pressed_color
+        # self.pressed = False if self.pressed else True
+        color = 'yellow'
+        if undo:
+            color = 'red'
+        if correct:
+            color = 'green'
         self._win._canvas.itemconfig(self._id, fill=color)
 
 
@@ -120,12 +123,14 @@ class Maze:
         self.speed = speed
         self._last_ij = (0, 0)
         self._solution_stack = [(0, 0)]
+        self.manual_solution = False
 
         random.seed(seed)
         self._create_cells()
 
     def _create_cells(self):
         self._win._canvas.bind('<B1-Motion>', self._next_cell_mousedrag)
+        self._win._canvas.bind('<<SolverLaunch>>', lambda e: self.solve())
         curr_x = self._posn.x
         for coln in range(self._cols):
             rows = []
@@ -180,6 +185,7 @@ class Maze:
             for j in range(self._rows):
                 self._draw_cell(i, j)
         self._reset_cells_visited()
+        self.manual_solution = False
 
     def _draw_cell(self, i, j):
         cell: Cell = self._cells[i][j]
@@ -233,6 +239,7 @@ class Maze:
         slept = 0
         while slept < sleep:
             self._win._update_timer()
+            self._win.redraw()
             time.sleep(SLEEP_FRAME)
             slept += SLEEP_FRAME
 
@@ -240,14 +247,16 @@ class Maze:
         for i in range(self._cols):
             for j in range(self._rows):
                 self._cells[i][j].visited = False
-                self._cells[i][j].pressed = False
+                self._cells[i][j].manual_visited = False
 
         self._last_ij = (0, 0)
         self._cells[0][0].change_color_pressed()
 
     def solve(self):
         self.interrupted = False
-        return self._solve_r(0, 0)
+        solution = self._solve_r(0, 0)
+        self.interrupt()
+        return solution
 
     def _solve_r(self, i, j):
         self._animate(self.speed)
@@ -279,27 +288,30 @@ class Maze:
 
     def _next_cell_callback(self, i, j):
         def inner(e: Event):
+            if not self.manual_solution:
+                self.manual_solution = True
+                self._win._canvas.event_generate('<<SolverLaunch>>')
             end_cell = (self._cols-1, self._rows-1)
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
             curr_cell: Cell = self._cells[i][j]
             valid_directions = self._get_valid_directions(
-                *self._last_ij, include_visited=False)
+                *self._last_ij, manual=True)
+            if (i, j) not in valid_directions:
+                return
             if (i, j) in valid_directions and not self.interrupted:
-                prev_cell.draw_move(curr_cell)
-                prev_cell.visited = True
-                curr_cell.visited = True
+                # prev_cell.draw_move(curr_cell)
+                prev_cell.manual_visited = True
+                curr_cell.manual_visited = True
 
-                prev_cell.change_color_pressed()
                 curr_cell.change_color_pressed()
                 self._last_ij = (i, j)
                 self._solution_stack.append((i, j))
                 if self._last_ij == end_cell:
                     self.interrupt()
                     self._draw_stacked_solution(correct=True, undo=True)
-                    self.interrupt()
                     return
             if not self.interrupted and (len(valid_directions) == 0
-               or len(self._get_valid_directions(i, j, include_visited=False)) == 0):
+               or len(self._get_valid_directions(i, j, manual=True)) == 0):
                 self.interrupt()
                 self._draw_stacked_solution(correct=False, undo=True)
                 return
@@ -315,16 +327,20 @@ class Maze:
         center = curr_cell.get_center()
         if (i, j) != self._last_ij:
             self._win._canvas.event_generate(
-                '<Button-1>', x=center.x, y=center.y)
+                '<Button-1>', x=center.x+4, y=center.y+4)
 
-    def _get_valid_directions(self, i, j, include_visited: bool = False):
+    def _get_valid_directions(self, i, j, manual: bool = False):
         curr_cell = self._cells[i][j]
         adjacents = {(i+1, j): 'r', (i-1, j): 'l',
                      (i, j+1): 'd', (i, j-1): 'u'}
         valid_directions = filter(lambda x: (0 <= x[0] < self._cols)
                                   and (0 <= x[1] < self._rows),
                                   adjacents.keys())
-        if not include_visited:
+        if manual:
+            valid_directions = filter(
+                lambda x: not self._cells[x[0]][x[1]].manual_visited,
+                valid_directions)
+        else:
             valid_directions = filter(
                 lambda x: not self._cells[x[0]][x[1]].visited,
                 valid_directions)
@@ -346,9 +362,6 @@ class Maze:
         return (i, j)
 
     def _draw_stacked_solution(self, correct: bool, undo: bool):
-        prev = (0, 0)
-        for el in self._solution_stack[1:]:
-            prev_cell: Cell = self._cells[prev[0]][prev[1]]
-            curr_cell: Cell = self._cells[el[0]][el[1]]
-            prev_cell.draw_move(curr_cell, correct=correct, undo=undo)
-            prev = el
+        for el in self._solution_stack:
+            cell: Cell = self._cells[el[0]][el[1]]
+            cell.change_color_pressed(undo=undo, correct=correct)
