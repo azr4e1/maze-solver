@@ -18,16 +18,16 @@ class App(MainWindow, Control):
 
         super().grid(row=0, column=0, columnspan=4, sticky=(N, S, W, E))
         super(MainWindow, self).grid(row=0, column=4, sticky=E)
-        self._add_scrolling()
+        # self._add_scrolling()
         self.maze: Maze = None
 
         self._root.bind('<Return>', lambda x: self.create_maze())
-        self._canvas.bind('<Button-4>', self._scroll_vertically_mousewheel(-1))
-        self._canvas.bind('<Button-5>', self._scroll_vertically_mousewheel(1))
-        self._canvas.bind('<Shift-Button-4>',
-                          self._scroll_horizontally_mousewheel(-1))
-        self._canvas.bind('<Shift-Button-5>',
-                          self._scroll_horizontally_mousewheel(1))
+        # self._canvas.bind('<Button-4>', self._scroll_vertically_mousewheel(-1))
+        # self._canvas.bind('<Button-5>', self._scroll_vertically_mousewheel(1))
+        # self._canvas.bind('<Shift-Button-4>',
+        #                   self._scroll_horizontally_mousewheel(-1))
+        # self._canvas.bind('<Shift-Button-5>',
+        #                   self._scroll_horizontally_mousewheel(1))
 
     def wait_for_close(self):
         self._is_running = True

@@ -1,8 +1,6 @@
 from tkinter import Tk, Canvas, N, S, W, E
 from tkinter import ttk
 
-BACKGROUND = "white"
-
 
 class Point:
     def __init__(self, x, y):
@@ -24,10 +22,10 @@ class Line:
 
 
 class MainWindow:
-    def __init__(self, root, width, height):
+    def __init__(self, root: Tk, width, height):
         self._root = root
         self._canvas = Canvas(
-            self._root, background=BACKGROUND, width=width, height=height)
+            self._root, background=root['background'], width=width, height=height)
         self._is_running = False
         self._root.protocol("WM_DELETE_WINDOW", self.close)
 
