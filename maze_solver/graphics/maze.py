@@ -130,7 +130,6 @@ class Maze:
 
     def _create_cells(self):
         self._win._canvas.bind('<B1-Motion>', self._next_cell_mousedrag)
-        self._win._canvas.bind('<<SolverLaunch>>', lambda e: self.solve())
         curr_x = self._posn.x
         for coln in range(self._cols):
             rows = []
@@ -256,6 +255,7 @@ class Maze:
         self.interrupted = False
         solution = self._solve_r(0, 0)
         self.interrupt()
+        self._win._root.event_generate('<<SolverStop>>')
         return solution
 
     def _solve_r(self, i, j):
@@ -290,7 +290,8 @@ class Maze:
         def inner(e: Event):
             if not self.manual_solution:
                 self.manual_solution = True
-                self._win._canvas.event_generate('<<SolverLaunch>>')
+                self._win._root.event_generate('<<SolverLaunch>>')
+                print('go')
             end_cell = (self._cols-1, self._rows-1)
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
             curr_cell: Cell = self._cells[i][j]
@@ -308,6 +309,7 @@ class Maze:
                 self._solution_stack.append((i, j))
                 if self._last_ij == end_cell:
                     self.interrupt()
+                    self._win._root.event_generate('<<SolverStop>>')
                     self._draw_stacked_solution(correct=True, undo=True)
                     return
             if not self.interrupted and (len(valid_directions) == 0

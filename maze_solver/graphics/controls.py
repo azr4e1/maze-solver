@@ -10,6 +10,7 @@ from .maze import Maze
 
 class Control(ABC):
     def __init__(self, root: Tk, width: int, maze_pos: Point):
+        self._root = root
         self._frame = ttk.Frame(root, width=width)
         self._spinners = ttk.Frame(self._frame)
         self._spinners.grid(row=0, column=0, rowspan=10, sticky=(N, S))
@@ -22,6 +23,10 @@ class Control(ABC):
         self._create_buttons()
 
     def create_maze(self):
+        self._root.bind('<<SolverLaunch>>',
+                        lambda e: (self._disable_launcher(), self.maze.solve()))
+        self._root.bind('<<SolverStop>>',
+                        lambda e: self._enable_launcher())
         self.error_val.set('')
         self._reset_timer()
         self._update_scrollsize()
@@ -63,11 +68,8 @@ class Control(ABC):
         self.reset_b.state(['disabled'])
         self.launch_b.state(['disabled'])
 
-        # task = Thread(target=self._launch_timer)
-        # task.start()
         self.maze._cells[0][0].change_color_pressed()
         self.maze_is_solved = self.maze.solve()
-        # task.join()
 
         self.create_b.state(['!disabled'])
         self.reset_b.state(['!disabled'])
@@ -182,6 +184,16 @@ class Control(ABC):
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
         self.interrupt_b.state(['disabled'])
+
+    def _disable_launcher(self):
+        self.create_b.state(['disabled'])
+        self.reset_b.state(['disabled'])
+        self.launch_b.state(['disabled'])
+
+    def _enable_launcher(self):
+        self.create_b.state(['!disabled'])
+        self.reset_b.state(['!disabled'])
+        self.launch_b.state(['!disabled'])
 
     @abstractmethod
     def clear(self):
