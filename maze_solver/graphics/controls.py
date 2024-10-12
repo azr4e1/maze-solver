@@ -68,7 +68,7 @@ class Control(ABC):
         self.reset_b.state(['disabled'])
         self.launch_b.state(['disabled'])
 
-        self.maze._cells[0][0].change_color_pressed()
+        self.maze._cells[0][0].change_color_pressed(blank=True)
         self.maze_is_solved = self.maze.solve()
 
         self.create_b.state(['!disabled'])

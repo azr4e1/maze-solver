@@ -89,7 +89,7 @@ class Cell:
     def register_event(self, event: str, callback: Callback):
         self._callbacks.append((event, callback))
 
-    def change_color_pressed(self, e: Optional[Event] = None, undo: bool = False, correct: bool = False):
+    def change_color_pressed(self, e: Optional[Event] = None, undo: bool = False, correct: bool = False, blank: bool = False):
         if self._id is None:
             return
         # self.pressed = False if self.pressed else True
@@ -98,6 +98,8 @@ class Cell:
             color = 'red'
         if correct:
             color = 'green'
+        if blank:
+            color = self._blank_color
         self._win._canvas.itemconfig(self._id, fill=color)
 
 
@@ -291,7 +293,6 @@ class Maze:
             if not self.manual_solution:
                 self.manual_solution = True
                 self._win._root.event_generate('<<SolverLaunch>>')
-                print('go')
             end_cell = (self._cols-1, self._rows-1)
             prev_cell: Cell = self._cells[self._last_ij[0]][self._last_ij[1]]
             curr_cell: Cell = self._cells[i][j]
