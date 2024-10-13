@@ -9,7 +9,7 @@ from .maze import Maze
 
 
 class Control(ABC):
-    def __init__(self, root: Tk, width: int, maze_pos: Point):
+    def __init__(self, root: Tk, width: int):
         self._root = root
         self._frame = ttk.Frame(root, width=width)
         self._spinners = ttk.Frame(self._frame)
@@ -19,7 +19,6 @@ class Control(ABC):
         self.maze_is_solved = False
         self.maze: Optional[Maze] = None
         self.start = 0
-        self.maze_pos = maze_pos
         self._create_buttons()
 
     def create_maze(self):
@@ -29,15 +28,16 @@ class Control(ABC):
                         lambda e: self._enable_launcher())
         self.error_val.set('')
         self._reset_timer()
-        self._update_scrollsize()
+        # self._update_scrollsize()
         rows = self.maze_rows.get()
         cols = self.maze_cols.get()
-        cell_size = self.maze_cell_size.get()
+        pos, cell_size = self._calculate_maze_position(rows, cols)
+        # cell_size = self.maze_cell_size.get()
         self.interrupt_b.state(['!disabled'])
         self.create_b.state(['disabled'])
         self.launch_b.state(['disabled'])
         self.reset_b.state(['disabled'])
-        self.maze = Maze(self.maze_pos, rows, cols, cell_size,
+        self.maze = Maze(pos, rows, cols, cell_size,
                          cell_size, self, 1/self.maze_speed.get())
         self.clear()
         try:
@@ -81,11 +81,11 @@ class Control(ABC):
             return
         self.interrupt_maze()
         self.maze_is_solved = False
-        cell_size = self.maze_cell_size.get()
-        if cell_size != self.maze._cell_size_x:
-            self.maze.resize(cell_size,
-                             cell_size)
-            self._update_scrollsize()
+        # cell_size = self.maze_cell_size.get()
+        # if cell_size != self.maze._cell_size_x:
+        #     self.maze.resize(cell_size,
+        #                      cell_size)
+        #     self._update_scrollsize()
         self.maze.clear()
 
     def interrupt_maze(self):
@@ -116,7 +116,6 @@ class Control(ABC):
     def _create_buttons(self):
         self.maze_rows = IntVar(value=10)
         self.maze_cols = IntVar(value=10)
-        self.maze_cell_size = IntVar(value=50)
         self.maze_speed = IntVar(value=20)
         self.error_val = StringVar(value="")
         self.timer = StringVar(value="0.00")
@@ -127,8 +126,6 @@ class Control(ABC):
             self._spinners, textvariable=self.error_val, foreground='red',
             font='TkSmallCaptionFont')
 
-        ttk.Label(self._spinners, text="Cell Size").grid(
-            column=0, row=0, padx=5, pady=5)
         ttk.Label(self._spinners, text="Columns").grid(
             column=0, row=1, padx=5, pady=5)
         ttk.Label(self._spinners, text="Rows").grid(
@@ -138,8 +135,6 @@ class Control(ABC):
         ttk.Label(self._spinners, text="Seconds:").grid(
             column=0, row=4, padx=5, pady=5)
 
-        ttk.Label(self._spinners, textvariable=self.maze_cell_size).grid(
-            column=2, row=0, padx=5, pady=5)
         ttk.Label(self._spinners, textvariable=self.maze_cols).grid(
             column=2, row=1, padx=5, pady=5)
         ttk.Label(self._spinners, textvariable=self.maze_rows).grid(
@@ -147,9 +142,6 @@ class Control(ABC):
         ttk.Label(self._spinners, textvariable=self.maze_speed).grid(
             column=2, row=3, padx=5, pady=5)
 
-        self.cellsize_b = ttk.Scale(
-            self._spinners, from_=10, to=99, variable=self.maze_cell_size,
-            command=lambda x: self.maze_cell_size.set(int(float(x))))
         self.cols_b = ttk.Scale(
             self._spinners, from_=2, to=50, variable=self.maze_cols,
             command=lambda x: self.maze_cols.set(int(float(x))))
@@ -169,7 +161,6 @@ class Control(ABC):
         self.interrupt_b = ttk.Button(
             self._buttons, text="Interrupt", command=self.interrupt_maze)
 
-        self.cellsize_b.grid(row=0, column=1, sticky=N, padx=5, pady=5)
         self.cols_b.grid(row=1, column=1, sticky=N, padx=5, pady=5)
         self.rows_b.grid(row=2, column=1, sticky=N, padx=5, pady=5)
         self.speed_b.grid(row=3, column=1, sticky=N, padx=5, pady=5)
@@ -203,6 +194,10 @@ class Control(ABC):
     def redraw(self):
         ...
 
+    # @abstractmethod
+    # def _update_scrollsize(self):
+    #     ...
+
     @abstractmethod
-    def _update_scrollsize(self):
+    def _calculate_maze_position(self, maze_rows: int, maze_cols: int):
         ...

@@ -14,12 +14,14 @@ class App(MainWindow, Control):
         self._root.rowconfigure(0, weight=1)
         self._root.columnconfigure(0, weight=1)
         super().__init__(self._root, width, height)
-        super(MainWindow, self).__init__(self._root, width/3, MAZE_POS)
+        super(MainWindow, self).__init__(self._root,
+                                         width/3)
 
         super().grid(row=0, column=0, columnspan=4, sticky=(N, S, W, E))
         super(MainWindow, self).grid(row=0, column=4, sticky=E)
         # self._add_scrolling()
         self.maze: Maze = None
+        self._canvas.bind('<Configure>', lambda e: self._resize_maze())
 
         self._root.bind('<Return>', lambda x: self.create_maze())
 
@@ -69,3 +71,27 @@ class App(MainWindow, Control):
             self._canvas.xview_scroll(direction, "units")
 
         return inner
+
+    def _calculate_maze_position(self, maze_rows: int, maze_cols: int):
+        canvas_height = self._canvas.winfo_height()
+        canvas_width = self._canvas.winfo_width()
+        cell_height = canvas_height / (maze_rows + 2)
+        cell_width = canvas_width / (maze_cols + 2)
+
+        cell_size = min(cell_height, cell_width)
+
+        height_pos = (canvas_height - cell_size * maze_rows) / 2
+        width_pos = (canvas_width - cell_size * maze_cols) / 2
+
+        pos = Point(width_pos, height_pos)
+
+        return pos, cell_size
+
+    def _resize_maze(self):
+        if self.maze is None:
+            return
+        self.maze.interrupt()
+        pos, size = self._calculate_maze_position(
+            self.maze._rows, self.maze._cols)
+        self.maze.resize(size, pos)
+        self.maze.clear(clear_solution=False)

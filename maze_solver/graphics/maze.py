@@ -150,9 +150,10 @@ class Maze:
             self._cells.append(rows)
             curr_x += self._cell_size_x
 
-    def resize(self, new_cell_size_x, new_cell_size_y):
-        self._cell_size_x = new_cell_size_x
-        self._cell_size_y = new_cell_size_y
+    def resize(self, new_cell_size, new_pos):
+        self._cell_size_x = new_cell_size
+        self._cell_size_y = new_cell_size
+        self._posn = new_pos
 
         curr_x = self._posn.x
         for coln in range(self._cols):
@@ -178,15 +179,16 @@ class Maze:
         self._break_walls_r(0, 0)
         self._reset_cells_visited()
 
-    def clear(self):
+    def clear(self, clear_solution=True):
         self._solution_stack = [(0, 0)]
-        self.interrupted = False
         self._win.clear()
         for i in range(self._cols):
             for j in range(self._rows):
                 self._draw_cell(i, j)
-        self._reset_cells_visited()
-        self.manual_solution = False
+        if clear_solution:
+            self.interrupted = False
+            self._reset_cells_visited()
+            self.manual_solution = False
 
     def _draw_cell(self, i, j):
         cell: Cell = self._cells[i][j]
@@ -354,8 +356,8 @@ class Maze:
         return list(valid_directions)
 
     def _get_cell_pos(self, x, y):
-        j = (y - self._posn.y) // self._cell_size_y
-        i = (x - self._posn.x) // self._cell_size_x
+        j = round((y - self._posn.y) // self._cell_size_y)
+        i = round((x - self._posn.x) // self._cell_size_x)
 
         if i < 0 or i >= self._cols:
             return None
