@@ -116,7 +116,7 @@ class Control(ABC):
     def _create_buttons(self):
         self.maze_rows = IntVar(value=10)
         self.maze_cols = IntVar(value=10)
-        self.maze_speed = IntVar(value=20)
+        self.maze_speed = IntVar(value=10)
         self.error_val = StringVar(value="")
         self.timer = StringVar(value="0.00")
 
@@ -149,7 +149,7 @@ class Control(ABC):
             self._spinners, from_=2, to=50, variable=self.maze_rows,
             command=lambda x: self.maze_rows.set(int(float(x))))
         self.speed_b = ttk.Scale(
-            self._spinners, from_=1, to=100, variable=self.maze_speed,
+            self._spinners, from_=1, to=20, variable=self.maze_speed,
             command=self._set_speed_callback)
 
         self.create_b = ttk.Button(
